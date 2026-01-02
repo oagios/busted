@@ -191,14 +191,12 @@ async function type(t){
   }
 }
 
+// RUN
 async function run(){
-  const f1 = document.getElementById("flash1");
-  const f2 = document.getElementById("flash2");
-  const share = document.getElementById("share");
+  const f1=flash1, f2=flash2, share=document.getElementById("share");
 
-  // ΔΙΠΛΟ RED FLASH + 4 BEEPS
-  flash(f1);
-  beepBurst();
+  // ΔΙΠΛΟ RED FLASH + 4 BEEPS + ΔΟΝΗΣΗ
+  flash(f1); beepBurst();
   setTimeout(()=>flash(f2),120);
 
   // FAKE SCREEN SHARE
@@ -207,18 +205,15 @@ async function run(){
 
   if(navigator.vibrate) navigator.vibrate([120,60,120]);
 
-  // TERMINAL LINES
   for(const l of lines){
     await type(l);
-    await new Promise(r=>setTimeout(r,80));
+    await new Promise(r=>setTimeout(r,90));
   }
 
-  // ΜΙΚΡΗ ΠΑΥΣΗ πριν το ALERT (dramatic effect)
-  await new Promise(r=>setTimeout(r,400));
-
-  // 🚨 SYSTEM ALERT
+  // ALERT
   startAlarm();
   if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+
   setTimeout(stopAlarm,2600);
 
   const end=document.createElement("div");
@@ -226,16 +221,14 @@ async function run(){
   end.textContent=`
 ⚠ SYSTEM ALERT ⚠
 
-Αγαπητέ Nick Aftias - Συν- Horiane μου 😈
-Μόλις την πάτησες 🤣
-Με το link αυτό έχουμε κλειδώσει:
+ΧΑΛΑΡΩΣΕ ${nick} 😈
+ΑΥΤΟ ΗΤΑΝ PRANK.
 
-✔ Τη φωτογραφία σου στο αρχικό flash
-✔ Τη διεύθυνση IP σου και το βρόγχο που συνδέεσαι
-✔ Έχουμε πλέον πρόσβαση σε κάμερα & συσκευή
+✔ Fake screen share
+✔ Καμία πρόσβαση σε δεδομένα
+✔ Καμία παραβίαση
 
-
-Σε ευχαριστούμε πολύ 🤣
+Την πάτησες 🤣
 `;
   term.appendChild(end);
 }
