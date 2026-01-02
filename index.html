@@ -191,12 +191,14 @@ async function type(t){
   }
 }
 
-// RUN
 async function run(){
-  const f1=flash1, f2=flash2, share=document.getElementById("share");
+  const f1 = document.getElementById("flash1");
+  const f2 = document.getElementById("flash2");
+  const share = document.getElementById("share");
 
-  // ΔΙΠΛΟ RED FLASH + 4 BEEPS + ΔΟΝΗΣΗ
-  flash(f1); beepBurst();
+  // ΔΙΠΛΟ RED FLASH + 4 BEEPS
+  flash(f1);
+  beepBurst();
   setTimeout(()=>flash(f2),120);
 
   // FAKE SCREEN SHARE
@@ -205,15 +207,18 @@ async function run(){
 
   if(navigator.vibrate) navigator.vibrate([120,60,120]);
 
+  // TERMINAL LINES
   for(const l of lines){
     await type(l);
-    await new Promise(r=>setTimeout(r,90));
+    await new Promise(r=>setTimeout(r,80));
   }
 
-  // ALERT
+  // ΜΙΚΡΗ ΠΑΥΣΗ πριν το ALERT (dramatic effect)
+  await new Promise(r=>setTimeout(r,400));
+
+  // 🚨 SYSTEM ALERT
   startAlarm();
   if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
-
   setTimeout(stopAlarm,2600);
 
   const end=document.createElement("div");
