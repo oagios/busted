@@ -26,17 +26,15 @@ canvas{
   position:relative;
   z-index:2;
   width:min(900px,94vw);
-  margin:40px auto;
-  background:rgba(0,0,0,.9);
+  margin:30px auto;
+  background:rgba(0,0,0,.93);
   border:1px solid #00ff8855;
-  padding:20px;
+  padding:18px;
   box-shadow:0 0 40px #00ff8840;
 }
 .line{white-space:pre;}
-.red{color:#ff3b3b;}
-.glitch{
-  animation: glitch .15s infinite;
-}
+.red{color:#ff2e2e;}
+.glitch{animation:glitch .15s infinite;}
 @keyframes glitch{
   0%{text-shadow:2px 0 red;}
   50%{text-shadow:-2px 0 cyan;}
@@ -50,19 +48,33 @@ canvas{
   pointer-events:none;
   z-index:9999;
   opacity:0;
+  background:#ff0000;
 }
-.flash.white{ background:white; }
-.flash.red{ background:#ff0000; }
-
-.flash.active{
-  animation: flashbang .6s ease-out;
-}
+.flash.active{animation:flashbang .45s ease-out;}
 @keyframes flashbang{
   0%{opacity:0;}
   10%{opacity:1;}
-  30%{opacity:.95;}
+  40%{opacity:.95;}
   100%{opacity:0;}
 }
+
+/* FAKE SCREEN SHARE */
+#share{
+  position:fixed;
+  inset:0;
+  z-index:9000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.85);
+  color:#ff2e2e;
+  font-size:26px;
+  letter-spacing:2px;
+  opacity:0;
+  pointer-events:none;
+  transition:.3s;
+}
+#share.show{opacity:1;}
 </style>
 </head>
 
@@ -70,72 +82,94 @@ canvas{
 
 <canvas id="matrix"></canvas>
 <div id="terminal"></div>
-<div class="flash white" id="flashW"></div>
-<div class="flash red" id="flashR"></div>
+
+<div class="flash" id="flash1"></div>
+<div class="flash" id="flash2"></div>
+
+<div id="share">SCREEN SHARE INITIALIZED</div>
 
 <script>
-// -------- MATRIX ----------
+// ---------- MATRIX ----------
 const c=document.getElementById("matrix");
 const ctx=c.getContext("2d");
-function resize(){
-  c.width=window.innerWidth;
-  c.height=window.innerHeight;
-}
-resize(); window.onresize=resize;
+function resize(){ c.width=innerWidth; c.height=innerHeight; }
+resize(); onresize=resize;
 
 const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";
-const fontSize=14;
-const columns=Math.floor(c.width/fontSize);
-const drops=Array(columns).fill(1);
+const fs=14;
+const cols=Math.floor(c.width/fs);
+const drops=Array(cols).fill(1);
 
-function drawMatrix(){
+setInterval(()=>{
   ctx.fillStyle="rgba(0,0,0,0.08)";
   ctx.fillRect(0,0,c.width,c.height);
   ctx.fillStyle="#00ff88";
-  ctx.font=fontSize+"px monospace";
-  for(let i=0;i<drops.length;i++){
-    const text=chars[Math.floor(Math.random()*chars.length)];
-    ctx.fillText(text,i*fontSize,drops[i]*fontSize);
-    if(drops[i]*fontSize>c.height && Math.random()>0.975) drops[i]=0;
+  ctx.font=fs+"px monospace";
+  drops.forEach((y,i)=>{
+    const t=chars[Math.random()*chars.length|0];
+    ctx.fillText(t,i*fs,y*fs);
+    if(y*fs>c.height && Math.random()>0.975) drops[i]=0;
     drops[i]++;
-  }
-}
-setInterval(drawMatrix,50);
+  });
+},50);
 
-// -------- PRANK ----------
-const params=new URLSearchParams(location.search);
-const nick=params.get("nick")||"USER";
+// ---------- PRANK ----------
+const nick=new URLSearchParams(location.search).get("nick")||"USER";
 const term=document.getElementById("terminal");
 
 const lines=[
   "root@node:~# init secure shell",
   "establishing encrypted tunnel...",
-  "bypassing firewall rules...",
-  `target detected: ${nick}`,
-  "injecting exploit module...",
-  "reading memory sectors...",
-  "████▒▒▒▒▒▒▒ 32%",
-  "██████▒▒▒▒▒ 61%",
+  "requesting screen stream...",
+  "screen stream accepted",
+  `active target: ${nick}`,
+  "injecting live monitor...",
+  "██████▒▒▒▒▒ 64%",
   "██████████ 100%",
-  "DEVICE CONTROL ACQUIRED"
+  "LIVE SESSION ACTIVE"
 ];
 
-// ---- AUDIO (unlocked on first click) ----
+// ---- AUDIO (οξύ) ----
 let audioCtx=null;
-function unlockAudio(){
-  if(!audioCtx){
-    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  }
-}
-document.addEventListener("click", unlockAudio, {once:true});
+addEventListener("click",()=>{
+  if(!audioCtx) audioCtx=new (AudioContext||webkitAudioContext)();
+},{once:true});
 
-function beep(freq=700){
+function beep(freq=1600, dur=70){
   if(!audioCtx) return;
   const o=audioCtx.createOscillator();
   o.frequency.value=freq;
   o.connect(audioCtx.destination);
   o.start();
-  setTimeout(()=>o.stop(),80);
+  setTimeout(()=>o.stop(),dur);
+}
+
+// 4 γρήγορα οξέα beep
+function beepBurst(){
+  let i=0;
+  const id=setInterval(()=>{
+    beep(1700,60);
+    if(navigator.vibrate) navigator.vibrate(40);
+    i++;
+    if(i>=4) clearInterval(id);
+  },120);
+}
+
+// συνεχόμενο alarm beep
+let alarmOsc=null;
+function startAlarm(){
+  if(!audioCtx || alarmOsc) return;
+  alarmOsc=audioCtx.createOscillator();
+  alarmOsc.frequency.value=1500;
+  alarmOsc.connect(audioCtx.destination);
+  alarmOsc.start();
+}
+function stopAlarm(){
+  if(alarmOsc){
+    alarmOsc.stop();
+    alarmOsc.disconnect();
+    alarmOsc=null;
+  }
 }
 
 // FLASH
@@ -143,41 +177,48 @@ function flash(el){
   el.classList.remove("active");
   void el.offsetWidth;
   el.classList.add("active");
-  beep(900);
 }
 
-// TYPE
-async function type(text){
+// TYPE (πολύ γρήγορο)
+async function type(t){
   const d=document.createElement("div");
   d.className="line";
   term.appendChild(d);
-  for(let i=0;i<text.length;i++){
-    d.textContent+=text[i];
-    if(Math.random()>.8) beep(500+Math.random()*400);
-    await new Promise(r=>setTimeout(r,25));
+  for(let i=0;i<t.length;i++){
+    d.textContent+=t[i];
+    if(Math.random()>.7) beep(1400,40);
+    await new Promise(r=>setTimeout(r,10));
   }
 }
 
-// RUN (AUTO)
+// RUN
 async function run(){
-  const fw=document.getElementById("flashW");
-  const fr=document.getElementById("flashR");
+  const f1=flash1, f2=flash2, share=document.getElementById("share");
 
-  // Λευκό → Κόκκινο → Λευκό
-  flash(fw);
-  setTimeout(()=>flash(fr),140);
-  setTimeout(()=>flash(fw),280);
+  // ΔΙΠΛΟ RED FLASH + 4 BEEPS + ΔΟΝΗΣΗ
+  flash(f1); beepBurst();
+  setTimeout(()=>flash(f2),120);
+
+  // FAKE SCREEN SHARE
+  setTimeout(()=>share.classList.add("show"),350);
+  setTimeout(()=>share.classList.remove("show"),1200);
 
   if(navigator.vibrate) navigator.vibrate([120,60,120]);
 
   for(const l of lines){
     await type(l);
-    await new Promise(r=>setTimeout(r,300));
+    await new Promise(r=>setTimeout(r,90));
   }
 
-  const final=document.createElement("div");
-  final.className="line glitch red";
-  final.textContent=`
+  // ALERT
+  startAlarm();
+  if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+
+  setTimeout(stopAlarm,2600);
+
+  const end=document.createElement("div");
+  end.className="line glitch red";
+  end.textContent=`
 
 ⚠ SYSTEM ALERT ⚠
 
