@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accessing...</title>
+
+<style>
+:root { color-scheme: dark; }
+body{
+  margin:0;
+  background:black;
+  color:#00ff9c;
+  font-family: "Courier New", monospace;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#screen{
+  width:min(900px,95vw);
+  background:#020202;
+  border:1px solid #00ff9c55;
+  padding:20px;
+  box-shadow:0 0 40px #00ff9c33;
+}
+.line{ opacity:0; }
+.flash{
+  position:fixed;
+  inset:0;
+  background:white;
+  opacity:0;
+  pointer-events:none;
+}
+.final{
+  color:#fff;
+  margin-top:20px;
+  font-size:1.1em;
+}
+.green{ color:#00ff9c; }
+.red{ color:#ff4d4d; }
+.note{
+  margin-top:10px;
+  opacity:.7;
+  font-size:.9em;
+}
+</style>
+</head>
+
+<body>
+
+<div id="screen"></div>
+<div class="flash" id="flash"></div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const nick = params.get("nick") || "USER";
+
+const lines = [
+  `> initializing secure session...`,
+  `> connecting to remote node...`,
+  `> handshake accepted`,
+  `> scanning device: ${nick}`,
+  `> loading modules █▒▒▒▒▒▒▒ 18%`,
+  `> loading modules █████▒▒▒ 62%`,
+  `> loading modules ████████ 100%`,
+  `> ACCESS GRANTED`,
+  `> injecting prank payload...`,
+];
+
+const screen = document.getElementById("screen");
+
+function flash(){
+  const f = document.getElementById("flash");
+  f.style.opacity = "1";
+  setTimeout(()=>f.style.opacity="0",120);
+}
+
+async function typeLine(text){
+  const div = document.createElement("div");
+  div.className="line";
+  screen.appendChild(div);
+  div.style.opacity=1;
+  for(let i=0;i<text.length;i++){
+    div.textContent += text[i];
+    await new Promise(r=>setTimeout(r,25));
+  }
+}
+
+async function run(){
+  flash(); flash();
+  for(const l of lines){
+    await typeLine(l);
+    await new Promise(r=>setTimeout(r,350));
+  }
+
+  const final = document.createElement("div");
+  final.className="final";
+  final.innerHTML = `
+    <span class="red">⚠ ALERT:</span><br><br>
+    ΧΑΛΑΡΩΣΕ ${nick} 😈<br><br>
+    <span class="green">Αυτό ήταν prank.</span><br>
+    Δεν συλλέγεται καμία πληροφορία.<br>
+    Δεν υπάρχει hack, tracking ή κάτι παράνομο.<br><br>
+    Την πάτησες 😄
+    <div class="note">
+      (στείλ’ το πίσω σε άλλον 😏)
+    </div>
+  `;
+  screen.appendChild(final);
+}
+
+run();
+</script>
+
+</body>
+</html>
