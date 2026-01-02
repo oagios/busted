@@ -27,14 +27,13 @@ canvas{
   z-index:2;
   width:min(900px,94vw);
   margin:40px auto;
-  background:rgba(0,0,0,.88);
+  background:rgba(0,0,0,.9);
   border:1px solid #00ff8855;
   padding:20px;
   box-shadow:0 0 40px #00ff8840;
 }
 .line{white-space:pre;}
-.red{color:#ff4d4d;}
-.green{color:#00ff88;}
+.red{color:#ff3b3b;}
 .glitch{
   animation: glitch .15s infinite;
 }
@@ -50,9 +49,11 @@ canvas{
   inset:0;
   pointer-events:none;
   z-index:9999;
-  background:white;
   opacity:0;
 }
+.flash.white{ background:white; }
+.flash.red{ background:#ff0000; }
+
 .flash.active{
   animation: flashbang .6s ease-out;
 }
@@ -62,21 +63,6 @@ canvas{
   30%{opacity:.95;}
   100%{opacity:0;}
 }
-
-/* START SCREEN */
-#start{
-  position:fixed;
-  inset:0;
-  z-index:10000;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:black;
-  color:#00ff88;
-  font-size:24px;
-  cursor:pointer;
-  letter-spacing:2px;
-}
 </style>
 </head>
 
@@ -84,9 +70,8 @@ canvas{
 
 <canvas id="matrix"></canvas>
 <div id="terminal"></div>
-<div class="flash" id="flash"></div>
-
-<div id="start">CLICK TO CONNECT</div>
+<div class="flash white" id="flashW"></div>
+<div class="flash red" id="flashR"></div>
 
 <script>
 // -------- MATRIX ----------
@@ -135,10 +120,17 @@ const lines=[
   "DEVICE CONTROL ACQUIRED"
 ];
 
-// BEEP (works after click)
-let audioCtx;
+// ---- AUDIO (unlocked on first click) ----
+let audioCtx=null;
+function unlockAudio(){
+  if(!audioCtx){
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  }
+}
+document.addEventListener("click", unlockAudio, {once:true});
+
 function beep(freq=700){
-  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(!audioCtx) return;
   const o=audioCtx.createOscillator();
   o.frequency.value=freq;
   o.connect(audioCtx.destination);
@@ -147,15 +139,14 @@ function beep(freq=700){
 }
 
 // FLASH
-function flash(){
-  const f=document.getElementById("flash");
-  f.classList.remove("active");
-  void f.offsetWidth;
-  f.classList.add("active");
+function flash(el){
+  el.classList.remove("active");
+  void el.offsetWidth;
+  el.classList.add("active");
   beep(900);
 }
 
-// TYPE EFFECT
+// TYPE
 async function type(text){
   const d=document.createElement("div");
   d.className="line";
@@ -167,9 +158,16 @@ async function type(text){
   }
 }
 
-// RUN
+// RUN (AUTO)
 async function run(){
-  flash(); setTimeout(flash,120); setTimeout(flash,240);
+  const fw=document.getElementById("flashW");
+  const fr=document.getElementById("flashR");
+
+  // Λευκό → Κόκκινο → Λευκό
+  flash(fw);
+  setTimeout(()=>flash(fr),140);
+  setTimeout(()=>flash(fw),280);
+
   if(navigator.vibrate) navigator.vibrate([120,60,120]);
 
   for(const l of lines){
@@ -194,217 +192,9 @@ async function run(){
   term.appendChild(final);
 }
 
-// START ON CLICK
-document.getElementById("start").onclick=()=>{
-  document.getElementById("start").remove();
-  run();
-};
+run();
 </script>
 
 </body>
 </html>
-<!doctype html>
-<html lang="el">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>root@node:~#</title>
 
-<style>
-html,body{
-  margin:0;
-  background:black;
-  overflow:hidden;
-  color:#00ff88;
-  font-family: Consolas, monospace;
-}
-
-/* MATRIX */
-canvas{
-  position:fixed;
-  inset:0;
-  z-index:0;
-}
-
-/* TERMINAL */
-#terminal{
-  position:relative;
-  z-index:2;
-  width:min(900px,94vw);
-  margin:40px auto;
-  background:rgba(0,0,0,.88);
-  border:1px solid #00ff8855;
-  padding:20px;
-  box-shadow:0 0 40px #00ff8840;
-}
-.line{white-space:pre;}
-.red{color:#ff4d4d;}
-.green{color:#00ff88;}
-.glitch{
-  animation: glitch .15s infinite;
-}
-@keyframes glitch{
-  0%{text-shadow:2px 0 red;}
-  50%{text-shadow:-2px 0 cyan;}
-  100%{text-shadow:2px 0 red;}
-}
-
-/* FLASH */
-.flash{
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  z-index:9999;
-  background:white;
-  opacity:0;
-}
-.flash.active{
-  animation: flashbang .6s ease-out;
-}
-@keyframes flashbang{
-  0%{opacity:0;}
-  10%{opacity:1;}
-  30%{opacity:.95;}
-  100%{opacity:0;}
-}
-
-/* START SCREEN */
-#start{
-  position:fixed;
-  inset:0;
-  z-index:10000;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:black;
-  color:#00ff88;
-  font-size:24px;
-  cursor:pointer;
-  letter-spacing:2px;
-}
-</style>
-</head>
-
-<body>
-
-<canvas id="matrix"></canvas>
-<div id="terminal"></div>
-<div class="flash" id="flash"></div>
-
-<div id="start">CLICK TO CONNECT</div>
-
-<script>
-// -------- MATRIX ----------
-const c=document.getElementById("matrix");
-const ctx=c.getContext("2d");
-function resize(){
-  c.width=window.innerWidth;
-  c.height=window.innerHeight;
-}
-resize(); window.onresize=resize;
-
-const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";
-const fontSize=14;
-const columns=Math.floor(c.width/fontSize);
-const drops=Array(columns).fill(1);
-
-function drawMatrix(){
-  ctx.fillStyle="rgba(0,0,0,0.08)";
-  ctx.fillRect(0,0,c.width,c.height);
-  ctx.fillStyle="#00ff88";
-  ctx.font=fontSize+"px monospace";
-  for(let i=0;i<drops.length;i++){
-    const text=chars[Math.floor(Math.random()*chars.length)];
-    ctx.fillText(text,i*fontSize,drops[i]*fontSize);
-    if(drops[i]*fontSize>c.height && Math.random()>0.975) drops[i]=0;
-    drops[i]++;
-  }
-}
-setInterval(drawMatrix,50);
-
-// -------- PRANK ----------
-const params=new URLSearchParams(location.search);
-const nick=params.get("nick")||"USER";
-const term=document.getElementById("terminal");
-
-const lines=[
-  "root@node:~# init secure shell",
-  "establishing encrypted tunnel...",
-  "bypassing firewall rules...",
-  `target detected: ${nick}`,
-  "injecting exploit module...",
-  "reading memory sectors...",
-  "████▒▒▒▒▒▒▒ 32%",
-  "██████▒▒▒▒▒ 61%",
-  "██████████ 100%",
-  "DEVICE CONTROL ACQUIRED"
-];
-
-// BEEP (works after click)
-let audioCtx;
-function beep(freq=700){
-  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  const o=audioCtx.createOscillator();
-  o.frequency.value=freq;
-  o.connect(audioCtx.destination);
-  o.start();
-  setTimeout(()=>o.stop(),80);
-}
-
-// FLASH
-function flash(){
-  const f=document.getElementById("flash");
-  f.classList.remove("active");
-  void f.offsetWidth;
-  f.classList.add("active");
-  beep(900);
-}
-
-// TYPE EFFECT
-async function type(text){
-  const d=document.createElement("div");
-  d.className="line";
-  term.appendChild(d);
-  for(let i=0;i<text.length;i++){
-    d.textContent+=text[i];
-    if(Math.random()>.8) beep(500+Math.random()*400);
-    await new Promise(r=>setTimeout(r,25));
-  }
-}
-
-// RUN
-async function run(){
-  flash(); setTimeout(flash,120); setTimeout(flash,240);
-  if(navigator.vibrate) navigator.vibrate([120,60,120]);
-
-  for(const l of lines){
-    await type(l);
-    await new Promise(r=>setTimeout(r,300));
-  }
-
-  const final=document.createElement("div");
-  final.className="line glitch red";
-  final.textContent=`
-⚠ SYSTEM ALERT ⚠
-
-ΧΑΛΑΡΩΣΕ ${nick} 😈
-ΑΥΤΟ ΗΤΑΝ PRANK.
-
-✔ Δεν έγινε hack
-✔ Δεν συλλέχθηκε καμία πληροφορία
-✔ Καμία πρόσβαση σε IP / κάμερα / συσκευή
-
-Την πάτησες 🤣
-`;
-  term.appendChild(final);
-}
-
-// START ON CLICK
-document.getElementById("start").onclick=()=>{
-  document.getElementById("start").remove();
-  run();
-};
-</script>
-
-</body>
-</html>
