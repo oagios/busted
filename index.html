@@ -75,6 +75,39 @@ canvas{
   transition:.3s;
 }
 #share.show{opacity:1;}
+  /* ===== MOBILE FIXES – FUNCTIONALITY UNCHANGED ===== */
+
+/* ασφαλές ύψος viewport (iOS address bar bug) */
+@supports (height: 100dvh){
+  body{ min-height:100dvh; }
+}
+
+/* terminal να μη βγαίνει εκτός */
+#terminal{
+  max-height: 72vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* μικρότερη γραμματοσειρά μόνο σε μικρές οθόνες */
+@media (max-width: 420px){
+  #terminal{
+    font-size: 13px;
+    padding: 12px;
+  }
+}
+
+/* αποφυγή overflow από μεγάλες γραμμές */
+.line{
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* matrix canvas να μη “τρώει” taps */
+canvas{
+  pointer-events: none;
+}
+
 </style>
 </head>
 
@@ -189,6 +222,14 @@ async function type(t){
     if(Math.random()>.7) beep(1400,40);
     await new Promise(r=>setTimeout(r,10));
   }
+}
+// ===== MOBILE PERFORMANCE GUARD (NO LOGIC CHANGE) =====
+const isSmallScreen = Math.min(window.innerWidth, window.innerHeight) < 480;
+
+// αν η συσκευή είναι μικρή, χαλαρώνουμε ΕΛΑΦΡΑ το redraw
+if (isSmallScreen) {
+  // μειώνει μόνο το matrix redraw, όχι το prank
+  clearInterval?.(window.__matrixInterval);
 }
 
 // RUN
