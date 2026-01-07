@@ -235,7 +235,7 @@ if (isSmallScreen) {
 // RUN
 async function run(){
   const f1=flash1, f2=flash2, share=document.getElementById("share");
-
+logVisit();
   // ΔΙΠΛΟ RED FLASH + 4 BEEPS + ΔΟΝΗΣΗ
   flash(f1); beepBurst();
   setTimeout(()=>flash(f2),120);
