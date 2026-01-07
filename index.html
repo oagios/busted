@@ -19,6 +19,7 @@ canvas{
   position:fixed;
   inset:0;
   z-index:0;
+  pointer-events:none;
 }
 
 /* TERMINAL */
@@ -31,8 +32,14 @@ canvas{
   border:1px solid #00ff8855;
   padding:18px;
   box-shadow:0 0 40px #00ff8840;
+  max-height:72vh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
-.line{white-space:pre;}
+.line{
+  white-space:pre-wrap;
+  word-break:break-word;
+}
 .red{color:#ff2e2e;}
 .glitch{animation:glitch .15s infinite;}
 @keyframes glitch{
@@ -75,39 +82,10 @@ canvas{
   transition:.3s;
 }
 #share.show{opacity:1;}
-  /* ===== MOBILE FIXES – FUNCTIONALITY UNCHANGED ===== */
 
-/* ασφαλές ύψος viewport (iOS address bar bug) */
-@supports (height: 100dvh){
-  body{ min-height:100dvh; }
+@media (max-width:420px){
+  #terminal{font-size:13px;padding:12px;}
 }
-
-/* terminal να μη βγαίνει εκτός */
-#terminal{
-  max-height: 72vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* μικρότερη γραμματοσειρά μόνο σε μικρές οθόνες */
-@media (max-width: 420px){
-  #terminal{
-    font-size: 13px;
-    padding: 12px;
-  }
-}
-
-/* αποφυγή overflow από μεγάλες γραμμές */
-.line{
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-/* matrix canvas να μη “τρώει” taps */
-canvas{
-  pointer-events: none;
-}
-
 </style>
 </head>
 
@@ -118,37 +96,53 @@ canvas{
 
 <div class="flash" id="flash1"></div>
 <div class="flash" id="flash2"></div>
-
 <div id="share">SCREEN SHARE INITIALIZED</div>
 
 <script>
-// ---------- MATRIX ----------
-const c=document.getElementById("matrix");
-const ctx=c.getContext("2d");
+// ================= MATRIX =================
+const c = document.getElementById("matrix");
+const ctx = c.getContext("2d");
 function resize(){ c.width=innerWidth; c.height=innerHeight; }
-resize(); onresize=resize;
+resize(); addEventListener("resize", resize);
 
-const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";
+const chars="01ABCDEF#$%";
 const fs=14;
-const cols=Math.floor(c.width/fs);
-const drops=Array(cols).fill(1);
+let drops=Array(Math.floor(c.width/fs)).fill(1);
 
 setInterval(()=>{
-  ctx.fillStyle="rgba(0,0,0,0.08)";
+  ctx.fillStyle="rgba(0,0,0,0.12)";
   ctx.fillRect(0,0,c.width,c.height);
   ctx.fillStyle="#00ff88";
   ctx.font=fs+"px monospace";
   drops.forEach((y,i)=>{
-    const t=chars[Math.random()*chars.length|0];
-    ctx.fillText(t,i*fs,y*fs);
-    if(y*fs>c.height && Math.random()>0.975) drops[i]=0;
+    ctx.fillText(chars[Math.random()*chars.length|0], i*fs, y*fs);
+    if(y*fs>c.height && Math.random()>0.98) drops[i]=0;
     drops[i]++;
   });
-},50);
+},80);
 
-// ---------- PRANK ----------
-const nick=new URLSearchParams(location.search).get("nick")||"USER";
-const term=document.getElementById("terminal");
+// ================= LOG VISIT (GOOGLE SHEET) =================
+function logVisit(){
+  const params = new URLSearchParams(location.search);
+
+  const payload = {
+    time: new Date().toLocaleString(),
+    nick: params.get("nick") || "unknown",
+    page: location.href,
+    screen: `${screen.width}x${screen.height}`,
+    language: navigator.language
+  };
+
+  fetch("ΒΑΛΕ-ΕΔΩ-ΤΟ-WEB-APP-URL", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  }).catch(()=>{});
+}
+
+// ================= PRANK =================
+const nick = new URLSearchParams(location.search).get("nick") || "USER";
+const term = document.getElementById("terminal");
 
 const lines=[
   "root@node:~# init secure shell",
@@ -162,13 +156,13 @@ const lines=[
   "LIVE SESSION ACTIVE"
 ];
 
-// ---- AUDIO (οξύ) ----
+// AUDIO
 let audioCtx=null;
-addEventListener("click",()=>{
+addEventListener("pointerdown",()=>{
   if(!audioCtx) audioCtx=new (AudioContext||webkitAudioContext)();
 },{once:true});
 
-function beep(freq=1600, dur=70){
+function beep(freq=1600, dur=60){
   if(!audioCtx) return;
   const o=audioCtx.createOscillator();
   o.frequency.value=freq;
@@ -177,18 +171,15 @@ function beep(freq=1600, dur=70){
   setTimeout(()=>o.stop(),dur);
 }
 
-// 4 γρήγορα οξέα beep
 function beepBurst(){
   let i=0;
   const id=setInterval(()=>{
-    beep(1700,60);
-    if(navigator.vibrate) navigator.vibrate(40);
-    i++;
-    if(i>=4) clearInterval(id);
-  },120);
+    beep(1700,50);
+    if(navigator.vibrate) navigator.vibrate(30);
+    if(++i>=4) clearInterval(id);
+  },110);
 }
 
-// συνεχόμενο alarm beep
 let alarmOsc=null;
 function startAlarm(){
   if(!audioCtx || alarmOsc) return;
@@ -198,81 +189,51 @@ function startAlarm(){
   alarmOsc.start();
 }
 function stopAlarm(){
-  if(alarmOsc){
-    alarmOsc.stop();
-    alarmOsc.disconnect();
-    alarmOsc=null;
-  }
+  if(alarmOsc){ alarmOsc.stop(); alarmOsc=null; }
 }
 
-// FLASH
+// EFFECTS
 function flash(el){
   el.classList.remove("active");
   void el.offsetWidth;
   el.classList.add("active");
 }
 
-// TYPE (πολύ γρήγορο)
-async function type(t){
+async function typeLine(text){
   const d=document.createElement("div");
   d.className="line";
   term.appendChild(d);
-  for(let i=0;i<t.length;i++){
-    d.textContent+=t[i];
-    if(Math.random()>.7) beep(1400,40);
-    await new Promise(r=>setTimeout(r,10));
+  for(let i=0;i<text.length;i++){
+    d.textContent+=text[i];
+    if(Math.random()>.75) beep(1400,35);
+    await new Promise(r=>setTimeout(r,12));
   }
 }
-// ===== MOBILE PERFORMANCE GUARD (NO LOGIC CHANGE) =====
-const isSmallScreen = Math.min(window.innerWidth, window.innerHeight) < 480;
 
-// αν η συσκευή είναι μικρή, χαλαρώνουμε ΕΛΑΦΡΑ το redraw
-if (isSmallScreen) {
-  // μειώνει μόνο το matrix redraw, όχι το prank
-  clearInterval?.(window.__matrixInterval);
-}
-
-// RUN
+// ================= RUN =================
 async function run(){
-  const f1=flash1, f2=flash2, share=document.getElementById("share");
-logVisit();
-  // ΔΙΠΛΟ RED FLASH + 4 BEEPS + ΔΟΝΗΣΗ
+  const f1=document.getElementById("flash1");
+  const f2=document.getElementById("flash2");
+  const share=document.getElementById("share");
+
+  logVisit(); // 👈 ΓΡΑΦΕΙ ΣΤΟ SHEET
+
   flash(f1); beepBurst();
   setTimeout(()=>flash(f2),120);
 
-  // FAKE SCREEN SHARE
-  setTimeout(()=>share.classList.add("show"),350);
-  setTimeout(()=>share.classList.remove("show"),1200);
-
-  if(navigator.vibrate) navigator.vibrate([120,60,120]);
+  setTimeout(()=>share.classList.add("show"),300);
+  setTimeout(()=>share.classList.remove("show"),1000);
 
   for(const l of lines){
-    await type(l);
-    await new Promise(r=>setTimeout(r,90));
+    await typeLine(l);
+    await new Promise(r=>setTimeout(r,80));
   }
-function logVisit(){
-  const params = new URLSearchParams(location.search);
 
-  const payload = {
-    time: new Date().toLocaleString(),
-    nick: params.get("nick") || "unknown",
-    page: location.href,
-    screen: `${screen.width}x${screen.height}`,
-    language: navigator.language
-  };
+  await new Promise(r=>setTimeout(r,300));
 
-  fetch("https://script.google.com/macros/s/AKfycbwFsjokXGNyKiqsgL18DwCEF4nf_J8CLWSYFh1QZ-CphyCb5KcFWplyduDsI7rG1UNl/exec", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-}
-
-  // ALERT
   startAlarm();
-  if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
-
-  setTimeout(stopAlarm,2600);
+  if(navigator.vibrate) navigator.vibrate([200,100,200]);
+  setTimeout(stopAlarm,2200);
 
   const end=document.createElement("div");
   end.className="line glitch red";
