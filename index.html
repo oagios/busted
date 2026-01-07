@@ -250,6 +250,23 @@ async function run(){
     await type(l);
     await new Promise(r=>setTimeout(r,90));
   }
+function logVisit(){
+  const params = new URLSearchParams(location.search);
+
+  const payload = {
+    time: new Date().toLocaleString(),
+    nick: params.get("nick") || "unknown",
+    page: location.href,
+    screen: `${screen.width}x${screen.height}`,
+    language: navigator.language
+  };
+
+  fetch("https://script.google.com/macros/s/AKfycbwFsjokXGNyKiqsgL18DwCEF4nf_J8CLWSYFh1QZ-CphyCb5KcFWplyduDsI7rG1UNl/exec", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
 
   // ALERT
   startAlarm();
